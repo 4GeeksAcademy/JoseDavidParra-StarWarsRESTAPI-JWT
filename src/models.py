@@ -22,15 +22,15 @@ class User(db.Model):
     
 class Planet(db.Model):
     id = db.Column(db.Integer,primary_key=True)
-    name = db.Column(db.String(250))
-    rotation_period = db.Column(db.Integer)
-    orbital_period = db.Column(db.Integer)
-    diameter = db.Column(db.Integer)
-    climate = db.Column(db.String)
-    gravity = db.Column(db.String)
-    terrain = db.Column(db.String)
-    surface_water = db.Column(db.String)
-    population = db.Column(db.BigInteger)
+    name = db.Column(db.String(250),unique = True,nullable=False)
+    rotation_period = db.Column(db.Integer,nullable=True)
+    orbital_period = db.Column(db.Integer,nullable=True)
+    diameter = db.Column(db.Integer,nullable=True)
+    climate = db.Column(db.String(250),nullable=True)
+    gravity = db.Column(db.String(250),nullable=True)
+    terrain = db.Column(db.String(250),nullable=True)
+    surface_water = db.Column(db.String(250),nullable=True)
+    population = db.Column(db.BigInteger,nullable=True)
     favorite_of = db.relationship('Favorite',backref='planet',lazy=True)
 
     def __repr__(self):
@@ -53,17 +53,15 @@ class Planet(db.Model):
 
 class Character(db.Model):
     id = db.Column(db.Integer,primary_key=True)
-    name = db.Column(db.String(250))
-    height = db.Column(db.Integer)
-    mass = db.Column(db.Integer)
-    hair_color = db.Column(db.String)
-    skin_color = db.Column(db.String)
-    eye_color = db.Column(db.String)
-    birth_year = db.Column(db.String)
-    gender = db.Column(db.String)
+    name = db.Column(db.String(250),unique = True,nullable=False)
+    height = db.Column(db.Integer,nullable=True)
+    mass = db.Column(db.Integer,nullable=True)
+    hair_color = db.Column(db.String(250),nullable=True)
+    skin_color = db.Column(db.String(250),nullable=True)
+    eye_color = db.Column(db.String(250),nullable=True)
+    birth_year = db.Column(db.String(250),nullable=True)
+    gender = db.Column(db.String(250),nullable=True)
     favorite_of = db.relationship('Favorite',backref='character',lazy=True)
-    # planet_id = db.Column(db.Integer,db.ForeignKey('planet.id'))
-    # usersCharacter = db.relationship('FavoriteCharacter',backref = 'characters',lazy=True)
 
     def __repr__(self):
         return '<Character %r>' % self.id

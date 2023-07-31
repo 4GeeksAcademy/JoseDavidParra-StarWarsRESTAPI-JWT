@@ -51,17 +51,27 @@ def get_post_users():
     elif request.method == "POST":
         request_body = request.get_json(force=True)
         user = User(email=request_body["email"],password=request_body["password"],is_active=request_body["is_active"])
+        if user is None:
+            return jsonify({"msg":"User no puede ser null"}),400
+        if "email" not in request_body:
+            return jsonify({"msg":"email no puede estar vacio"}),400
+        if "password" not in request_body:
+            return jsonify({"msg":"password no puede estar vacio"}),400
         db.session.add(user)
         db.session.commit()
         response_body = {
-            "msg" : "ok"
+            "msg" : "ok - User created"
         }
         return jsonify(response_body), 200
 
 @app.route('/users/<int:user_id>', methods=['GET','DELETE'])
 def get_delete_one_user(user_id):
     user_query = User.query.filter_by(id=user_id).first()
-    if request.method == "GET":
+
+    if user_query is None:
+        return jsonify({"msg" : "User not found"}),404
+
+    elif request.method == "GET":
         response_body = {
             "msg": "ok",
             "result" : user_query.serialize()
@@ -70,7 +80,7 @@ def get_delete_one_user(user_id):
     
     elif request.method == "DELETE":
         response_body = {
-            "msg": "ok"
+            "msg": "ok - User deleted"
         }
         db.session.delete(user_query)
         db.session.commit()
@@ -90,17 +100,25 @@ def get_post_characters():
     elif request.method == "POST":
         request_body = request.get_json(force=True)
         character = Character(name=request_body["name"],height=request_body["height"],mass=request_body["mass"],hair_color=request_body["hair_color"],skin_color=request_body["skin_color"],eye_color=request_body["eye_color"],birth_year=request_body["birth_year"],gender=request_body["gender"])
+        if character is None:
+            return jsonify({"msg":"Character no puede ser null"}),400
+        if "name" not in request_body:
+            return jsonify({"msg":"name no puede ser null"}),400
         db.session.add(character)
         db.session.commit()
         response_body = {
-            "msg" : "ok"
+            "msg" : "ok - Character created"
         }
         return jsonify(response_body), 200
 
 @app.route('/characters/<int:character_id>', methods=['GET','DELETE'])
 def get_delete_one_character(character_id):
     character_query = Character.query.filter_by(id=character_id).first()
-    if request.method == "GET":
+
+    if character_query is None:
+        return jsonify({"msg" : "Character not found"}),404
+
+    elif request.method == "GET":
         response_body = {
             "msg": "ok",
             "result" : character_query.serialize()
@@ -109,7 +127,7 @@ def get_delete_one_character(character_id):
     
     elif request.method == "DELETE":
         response_body = {
-            "msg": "ok"
+            "msg": "ok - Character deleted"
         }
         db.session.delete(character_query)
         db.session.commit()
@@ -129,17 +147,25 @@ def get_post_planets():
     elif request.method == "POST":
         request_body = request.get_json(force=True)
         planet = Planet(name=request_body["name"],rotation_period=request_body["rotation_period"],orbital_period=request_body["orbital_period"],diameter=request_body["diameter"],climate=request_body["climate"],gravity=request_body["gravity"],terrain=request_body["terrain"],surface_water=request_body["surface_water"],population=request_body["population"])
+        if planet is None:
+            return jsonify({"msg":"Planet cannot be null"})
+        if "name" not in request_body:
+            return jsonify({"msg":"name cannot be null"}),404
         db.session.add(planet)
         db.session.commit()
         response_body = {
-            "msg" : "ok"
+            "msg" : "ok - Planet created"
         }
         return jsonify(response_body), 200
 
 @app.route('/planets/<int:planet_id>', methods=['GET','DELETE'])
 def get_delete_one_planet(planet_id):
     planet_query = Planet.query.filter_by(id=planet_id).first()
-    if request.method == "GET":
+
+    if planet_query is None:
+        return jsonify({"msg" : "Planet not found"}),404
+
+    elif request.method == "GET":
         response_body = {
             "msg": "ok",
             "result" : planet_query.serialize()
@@ -148,8 +174,9 @@ def get_delete_one_planet(planet_id):
     
     elif request.method == "DELETE":
         response_body = {
-            "msg": "ok"
+            "msg": "ok - Planet deleted"
         }
+        favorites_query = Favorite
         db.session.delete(planet_query)
         db.session.commit()
         return jsonify(response_body), 200
@@ -167,18 +194,31 @@ def get_post_favorites():
     
     elif request.method == "POST":
         request_body = request.get_json(force=True)
+        exists = Favorite.query.filter_by(user_id=request_body["user_id"],character_id=request_body["character_id"],planet_id=request_body["planet_id"]).first()
+        if exists != None:
+            return jsonify({"msg":"Already exists"}),400
         favorite = Favorite(user_id=request_body["user_id"],character_id=request_body["character_id"],planet_id=request_body["planet_id"])
+        if favorite.user_id is None:
+            return jsonify({"msg":"No user was selected"}),400
+        if favorite.character_id is None and favorite.planet_id is None:
+            return jsonify({"msg":"No character or planet was selected"}),400
+        if favorite.character_id is not None and favorite.planet_id is not None:
+            return jsonify({"msg":"Multiple items selected"}),400
         db.session.add(favorite)
         db.session.commit()
         response_body = {
-            "msg" : "ok"
+            "msg" : "ok - Favorite created"
         }
         return jsonify(response_body), 200
 
 @app.route('/favorites/<int:favorite_id>', methods=['GET','DELETE'])
 def get_delete_one_favorite(favorite_id):
     favorite_query = Favorite.query.filter_by(id=favorite_id).first()
-    if request.method == "GET":
+
+    if favorite_query is None:
+        return jsonify({"msg" : "Favorite not found"}),404
+
+    elif request.method == "GET":
         response_body = {
             "msg": "ok",
             "result" : favorite_query.serialize()
@@ -187,7 +227,7 @@ def get_delete_one_favorite(favorite_id):
 
     elif request.method == "DELETE":
         response_body = {
-            "msg": "ok"
+            "msg": "ok - Favorite deleted"
         }
         db.session.delete(favorite_query)
         db.session.commit()
