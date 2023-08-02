@@ -10,6 +10,10 @@ from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User, Character, Planet, Favorite
 #from models import Person
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -26,6 +30,10 @@ db.init_app(app)
 CORS(app)
 setup_admin(app)
 
+# Setup the Flask-JWT-Extended extension
+app.config["JWT_SECRET_KEY"] = os.getenv("PASSWORD_KEY")  # Change this!
+jwt = JWTManager(app)
+
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
@@ -37,6 +45,64 @@ def sitemap():
     return generate_sitemap(app)
 
 # ----- ENDPOINTS ------ 
+
+# Create a route to authenticate your users and return JWTs. The
+# create_access_token() function is used to actually generate the JWT.
+@app.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+
+    if email is None or password is None:
+        return jsonify({"msg":"Missing data"}),404
+    
+    user = User.query.filter_by(email=email).first()
+
+    if user is None:
+        return jsonify({"msg":"User does not exist"}),404
+    
+    if password != user.password:
+        return jsonify({"msg":"Wrong password"}),404
+
+    access_token = create_access_token(identity=email)
+    return jsonify(access_token=access_token)
+
+# Protect a route with jwt_required, which will kick out requests
+# without a valid JWT present.
+@app.route("/profile", methods=["GET"])
+@jwt_required()
+def profile():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(email=current_user).first()
+    return jsonify(logged_in_as=user.serialize()), 200
+
+@app.route("/signup",methods=['POST'])
+def signup():
+        request_body = request.get_json(force=True)
+
+        if "is_active" not in request_body:
+            request_body.update({"is_active":True})
+
+        if "email" not in request_body:
+            return jsonify({"msg":"email no puede estar vacio"}),400
+        
+        exists = User.query.filter_by(email=request_body["email"]).first()
+
+        if exists is not None:
+            return jsonify({"msg":"User already exists"}),400
+        
+        if "password" not in request_body:
+            return jsonify({"msg":"password no puede estar vacio"}),400
+        
+        user = User(email=request_body["email"],password=request_body["password"],is_active=request_body["is_active"])
+
+        db.session.add(user)
+        db.session.commit()
+        response_body = {
+            "msg" : "ok - User created"
+        }
+        return jsonify(response_body), 200
 
 @app.route('/users', methods=['GET','POST'])
 def get_post_users():
